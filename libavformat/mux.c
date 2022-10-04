@@ -448,6 +448,7 @@ int avformat_init_output(AVFormatContext *s, AVDictionary **options)
 
 int avformat_write_header(AVFormatContext *s, AVDictionary **options)
 {
+    //printf("avformat_write_header\n");
     FFFormatContext *const si = ffformatcontext(s);
     int already_initialized = si->initialized;
     int streams_already_initialized = si->streams_initialized;
@@ -456,10 +457,12 @@ int avformat_write_header(AVFormatContext *s, AVDictionary **options)
     if (!already_initialized)
         if ((ret = avformat_init_output(s, options)) < 0)
             return ret;
+    //printf("avformat_write_header 1\n");
 
     if (!(s->oformat->flags & AVFMT_NOFILE) && s->pb)
         avio_write_marker(s->pb, AV_NOPTS_VALUE, AVIO_DATA_MARKER_HEADER);
     if (s->oformat->write_header) {
+        //printf("avformat_write_header 2\n");
         ret = s->oformat->write_header(s);
         if (ret >= 0 && s->pb && s->pb->error < 0)
             ret = s->pb->error;
@@ -471,10 +474,13 @@ int avformat_write_header(AVFormatContext *s, AVDictionary **options)
         avio_write_marker(s->pb, AV_NOPTS_VALUE, AVIO_DATA_MARKER_UNKNOWN);
 
     if (!si->streams_initialized) {
+        //printf("avformat_write_header 3\n");
         if ((ret = init_pts(s)) < 0)
             goto fail;
     }
 
+    //printf("avformat_write_header done\n");
+    
     return streams_already_initialized;
 
 fail:

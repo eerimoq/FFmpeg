@@ -156,6 +156,15 @@ void avio_context_free(AVIOContext **ps)
 
 static void writeout(AVIOContext *s, const uint8_t *data, int len)
 {
+//    printf("writeout: %02x %02x %02x %02x %02x %02x %02x %02x\n",
+//           (int)data[0],
+//           (int)data[1],
+//           (int)data[2],
+//           (int)data[3],
+//           (int)data[4],
+//           (int)data[5],
+//           (int)data[6],
+//           (int)data[7]);
     FFIOContext *const ctx = ffiocontext(s);
     if (!s->error) {
         int ret = 0;
@@ -209,6 +218,7 @@ static void flush_buffer(AVIOContext *s)
 
 void avio_w8(AVIOContext *s, int b)
 {
+    //printf("avio_w8\n");
     av_assert2(b>=-128 && b<=255);
     *s->buf_ptr++ = b;
     if (s->buf_ptr >= s->buf_end)
@@ -231,6 +241,7 @@ void ffio_fill(AVIOContext *s, int b, int64_t count)
 
 void avio_write(AVIOContext *s, const unsigned char *buf, int size)
 {
+    //printf("avio_write - size: %d\n", size);
     if (s->direct && !s->update_checksum) {
         avio_flush(s);
         writeout(s, buf, size);
@@ -251,6 +262,7 @@ void avio_write(AVIOContext *s, const unsigned char *buf, int size)
 
 void avio_flush(AVIOContext *s)
 {
+    //printf("avio_flush\n");
     int seekback = s->write_flag ? FFMIN(0, s->buf_ptr - s->buf_ptr_max) : 0;
     flush_buffer(s);
     if (seekback)
@@ -259,6 +271,7 @@ void avio_flush(AVIOContext *s)
 
 int64_t avio_seek(AVIOContext *s, int64_t offset, int whence)
 {
+    //printf("avio_seek: %d %d (cur=%d, set=%d)\n", (int)offset, whence, SEEK_CUR, SEEK_SET);
     FFIOContext *const ctx = ffiocontext(s);
     int64_t offset1;
     int64_t pos;
@@ -1482,7 +1495,9 @@ static int url_open_dyn_buf_internal(AVIOContext **s, int max_packet_size)
 
 int avio_open_dyn_buf(AVIOContext **s)
 {
-    return url_open_dyn_buf_internal(s, 0);
+    int res = url_open_dyn_buf_internal(s, 0);
+    //printf("avio_open_dyn_buf: %p\n", *s);
+    return res;
 }
 
 int ffio_open_dyn_packet_buf(AVIOContext **s, int max_packet_size)
@@ -1527,6 +1542,7 @@ void ffio_reset_dyn_buf(AVIOContext *s)
 
 int avio_close_dyn_buf(AVIOContext *s, uint8_t **pbuffer)
 {
+    //printf("avio_close_dyn_buf: %p\n", s);
     DynBuffer *d;
     int size;
     int padding = 0;

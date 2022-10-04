@@ -5008,6 +5008,7 @@ static int mov_write_moof_tag_internal(AVIOContext *pb, MOVMuxContext *mov,
 static int mov_write_sidx_tag(AVIOContext *pb,
                               MOVTrack *track, int ref_size, int total_sidx_size)
 {
+    //printf("mov_write_sidx_tag\n");
     int64_t pos = avio_tell(pb), offset_pos, end_pos;
     int64_t presentation_time, duration, offset;
     unsigned starts_with_SAP;
@@ -5073,6 +5074,7 @@ static int mov_write_sidx_tag(AVIOContext *pb,
 static int mov_write_sidx_tags(AVIOContext *pb, MOVMuxContext *mov,
                                int tracks, int ref_size)
 {
+    //printf("mov_write_sidx_tags\n");
     int i, round, ret;
     AVIOContext *avio_buf;
     int total_size = 0;
@@ -5158,6 +5160,7 @@ static int mov_write_prft_tag(AVIOContext *pb, MOVMuxContext *mov, int tracks)
 static int mov_write_moof_tag(AVIOContext *pb, MOVMuxContext *mov, int tracks,
                               int64_t mdat_size)
 {
+    //printf("mov_write_moof_tag\n");
     AVIOContext *avio_buf;
     int ret, moof_size;
 
@@ -5706,6 +5709,8 @@ static int mov_flush_fragment(AVFormatContext *s, int force)
     if ((ret = mov_write_squashed_packets(s)) < 0)
         return ret;
 
+    //printf("avio_tell in mov_flush_fragment: %d\n", (int)avio_tell(s->pb));
+    
     // Try to fill in the duration of the last packet in each stream
     // from queued packets in the interleave queues. If the flushing
     // of fragments was triggered automatically by an AVPacket, we
@@ -5864,6 +5869,7 @@ static int mov_flush_fragment(AVFormatContext *s, int force)
         }
 
         if (write_moof) {
+            //printf("write_moof\n");
             avio_write_marker(s->pb, AV_NOPTS_VALUE, AVIO_DATA_MARKER_FLUSH_POINT);
 
             mov_write_moof_tag(s->pb, mov, moof_tracks, mdat_size);
@@ -5887,6 +5893,8 @@ static int mov_flush_fragment(AVFormatContext *s, int force)
             buf_size = avio_close_dyn_buf(mov->mdat_buf, &buf);
             mov->mdat_buf = NULL;
         }
+
+        printf("avio_tell in mov_flush_fragment 2: %d\n", (int)avio_tell(s->pb));
 
         avio_write(s->pb, buf, buf_size);
         av_free(buf);
@@ -6406,10 +6414,12 @@ static int mov_write_subtitle_end_packet(AVFormatContext *s,
 
 static int mov_write_packet(AVFormatContext *s, AVPacket *pkt)
 {
+    //printf("mov_write_packet\n");
     MOVMuxContext *mov = s->priv_data;
     MOVTrack *trk;
 
     if (!pkt) {
+        //printf("flush\n");
         mov_flush_fragment(s, 1);
         return 1;
     }
@@ -7237,6 +7247,7 @@ static int mov_init(AVFormatContext *s)
 
 static int mov_write_header(AVFormatContext *s)
 {
+    //printf("mov_write_header\n");
     AVIOContext *pb = s->pb;
     MOVMuxContext *mov = s->priv_data;
     int i, ret, hint_track = 0, tmcd_track = 0, nb_tracks = s->nb_streams;
@@ -7407,6 +7418,7 @@ static int get_moov_size(AVFormatContext *s)
 
 static int get_sidx_size(AVFormatContext *s)
 {
+    //printf("get_sidx_size\n");
     int ret;
     AVIOContext *buf;
     MOVMuxContext *mov = s->priv_data;
@@ -7480,6 +7492,7 @@ static int shift_data(AVFormatContext *s)
 
 static int mov_write_trailer(AVFormatContext *s)
 {
+    //printf("mov_write_trailer\n");
     MOVMuxContext *mov = s->priv_data;
     AVIOContext *pb = s->pb;
     int res = 0;

@@ -138,6 +138,7 @@ int ff_hls_write_file_entry(AVIOContext *out, int insert_discont,
                             int64_t video_keyframe_size, int64_t video_keyframe_pos,
                             int iframe_mode)
 {
+    printf("ff_hls_write_file_entry: pos=%d, size=%d\n", (int)pos, (int)size);
     if (!out || !filename)
         return AVERROR(EINVAL);
 

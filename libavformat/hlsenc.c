@@ -285,6 +285,7 @@ static int strftime_expand(const char *fmt, char **dest)
 static int hlsenc_io_open(AVFormatContext *s, AVIOContext **pb, const char *filename,
                           AVDictionary **options)
 {
+    //printf("Output filename: %s\n", filename);
     HLSContext *hls = s->priv_data;
     int http_base_proto = filename ? ff_is_http_proto(filename) : 0;
     int err = AVERROR_MUXER_NOT_FOUND;
@@ -305,6 +306,7 @@ static int hlsenc_io_open(AVFormatContext *s, AVIOContext **pb, const char *file
 
 static int hlsenc_io_close(AVFormatContext *s, AVIOContext **pb, char *filename)
 {
+    //printf("Close filename: %s\n", filename);
     HLSContext *hls = s->priv_data;
     int http_base_proto = filename ? ff_is_http_proto(filename) : 0;
     int ret = 0;
@@ -533,6 +535,7 @@ static void write_styp(AVIOContext *pb)
 
 static int flush_dynbuf(VariantStream *vs, int *range_length)
 {
+    //printf("flush_dynbuf\n");
     AVFormatContext *ctx = vs->avf;
 
     if (!ctx->pb) {
@@ -544,6 +547,7 @@ static int flush_dynbuf(VariantStream *vs, int *range_length)
 
     // write out to file
     *range_length = avio_close_dyn_buf(ctx->pb, &vs->temp_buffer);
+    //printf("range length: %d\n", *range_length);
     ctx->pb = NULL;
     avio_write(vs->out, vs->temp_buffer, *range_length);
     avio_flush(vs->out);
@@ -921,8 +925,10 @@ static int hls_mux_init(AVFormatContext *s, VariantStream *vs)
         return ret;
 
     if (hls->segment_type == SEGMENT_TYPE_FMP4) {
+        //printf("open fmp4 first\n");
         set_http_options(s, &options, hls);
         if (byterange_mode) {
+            //printf("open byte range mode\n");
             ret = hlsenc_io_open(s, &vs->out, vs->basename, &options);
         } else {
             ret = hlsenc_io_open(s, &vs->out, vs->base_output_dirname, &options);
@@ -1106,6 +1112,7 @@ static int hls_append_segment(struct AVFormatContext *s, HLSContext *hls,
                               VariantStream *vs, double duration, int64_t pos,
                               int64_t size)
 {
+    //printf("hls_append_segment: pos=%d, size=%d\n", (int)pos, (int)size);
     HLSSegment *en = av_malloc(sizeof(*en));
     const char  *filename;
     int byterange_mode = (hls->flags & HLS_SINGLE_FILE) || (hls->max_seg_size > 0);
@@ -1534,6 +1541,7 @@ fail:
 
 static int hls_window(AVFormatContext *s, int last, VariantStream *vs)
 {
+    //printf("hls_window\n");
     HLSContext *hls = s->priv_data;
     HLSSegment *en;
     int target_duration = 0;
@@ -2295,6 +2303,7 @@ fail:
 
 static int hls_write_header(AVFormatContext *s)
 {
+    //printf("hls_write_header\n");
     HLSContext *hls = s->priv_data;
     int ret, i, j;
     VariantStream *vs = NULL;
@@ -2350,6 +2359,7 @@ static int hls_write_header(AVFormatContext *s)
             }
         }
     }
+    //printf("hls_write_header done\n");
 
     return ret;
 }
@@ -2404,6 +2414,7 @@ static int64_t append_single_file(AVFormatContext *s, VariantStream *vs)
 }
 static int hls_write_packet(AVFormatContext *s, AVPacket *pkt)
 {
+    //printf("hls_write_packet: %d\n", (int)pkt->size);
     HLSContext *hls = s->priv_data;
     AVFormatContext *oc = NULL;
     AVStream *st = s->streams[pkt->stream_index];
@@ -2498,6 +2509,7 @@ static int hls_write_packet(AVFormatContext *s, AVPacket *pkt)
         int64_t new_start_pos;
         int byterange_mode = (hls->flags & HLS_SINGLE_FILE) || (hls->max_seg_size > 0);
 
+        //printf("av_write_frame\n");
         av_write_frame(oc, NULL); /* Flush any buffered data */
         new_start_pos = avio_tell(oc->pb);
         vs->size = new_start_pos - vs->start_pos;
@@ -2505,6 +2517,7 @@ static int hls_write_packet(AVFormatContext *s, AVPacket *pkt)
         if (hls->segment_type == SEGMENT_TYPE_FMP4) {
             if (!vs->init_range_length) {
                 range_length = avio_close_dyn_buf(oc->pb, &vs->init_buffer);
+                //printf("init range length: %d\n", range_length);
                 if (range_length <= 0)
                     return AVERROR(EINVAL);
                 avio_write(vs->out, vs->init_buffer, range_length);
@@ -2727,6 +2740,8 @@ static int hls_write_trailer(struct AVFormatContext *s)
     AVDictionary *options = NULL;
     int range_length, byterange_mode;
 
+    //printf("hls_write_trailer: nb_varstreams=%d\n", hls->nb_varstreams);
+
     for (i = 0; i < hls->nb_varstreams; i++) {
         char *filename = NULL;
         vs = &hls->var_streams[i];
@@ -2757,6 +2772,7 @@ static int hls_write_trailer(struct AVFormatContext *s)
                 av_write_frame(oc, NULL); /* Flush any buffered data */
 
                 range_length = avio_close_dyn_buf(oc->pb, &buffer);
+                //printf("init range length in trailer: %d\n", range_length);
                 avio_write(vs->out, buffer, range_length);
                 av_freep(&buffer);
                 vs->init_range_length = range_length;
